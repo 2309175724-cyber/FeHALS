@@ -11,7 +11,11 @@
 - XYZ 点云解析改为逐行流式读取，避免大点云文件整体载入内存
 - 高度着色渐变抽取为共用模块 colorRamp.js（3D 点云着色与统计直方图共用）
 
-## v0.1.0 (2026-09-02)
+### Fixed
+- 结果接口响应补充 stats 字段，修复前端统计面板无数据
+- 页面加载时拉取后端已注册模型，修复刷新后模型列表为空
+
+## v0.1.0 (2026-09-01)
 
 ### Added
 - 参数规格库（scannerSpecs.js）：扫描器/平台参数有效范围、默认值、步长
@@ -24,11 +28,12 @@
 - 航迹管理 Tab（航迹列表 + 弓字形面板）
 - SUMMERY.md 中文开发日志
 - CHANGELOG.md 变更记录
+- .github/CODEOWNERS 保护云端repo
 
 ### Changed
-- 扫描器选型：Airborne → `copter_linearpath` + `riegl_vux-1uav`（含 beamOrigin/headRotateAxis，扫描方向正确为垂轨）
+- 扫描器选型：Airborne -> `copter_linearpath` + `riegl_vux-1uav`（含 beamOrigin/headRotateAxis，扫描方向正确为垂轨）
 - 移除 survey XML 的 `rotationSpec="CANONICAL"` 与 scannerMount 覆盖，使用平台默认安装
-- 侧边栏 Tab：「点云渲染」→「点云」，点云下载整合至 Tab 内
+- 侧边栏 Tab：「点云渲染」->「点云」，点云下载整合至 Tab 内
 - 模型列表删除 bbox 全选按钮
 - 仿真参数输入改为纵向布局（标签在上、输入框居中、有效范围在输入框下方）
 

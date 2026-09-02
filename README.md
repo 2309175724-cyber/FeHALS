@@ -32,10 +32,7 @@ FeHALS/
 │       ├── stores/     # Pinia 状态
 │       ├── composables/# Three.js 场景 / 航点交互 / API 客户端
 │       └── assets/
-├── doc/                # 项目文档（LaTeX，Elsevier CAS）
-│   ├── Manuscript.tex
-│   └── Makefile        # cd doc && make
-└── doc/                # 项目文档（LaTeX，Elsevier CAS）
+└──doc/                # 项目文档（LaTeX，Elsevier CAS）
     ├── Manuscript.tex
     └── Makefile        # cd doc && make
 ```

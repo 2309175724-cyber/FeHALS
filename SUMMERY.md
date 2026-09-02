@@ -11,3 +11,11 @@
 文档方面，重写了 `doc/Manuscript.tex`，将标题/摘要/亮点/关键词从 QGIS 插件描述改为 Web 架构描述，补全了所有章节，新增了 AEOS 对比与架构取舍说明，更新了参考文献。
 
 在集成过程中修复了多个问题：HELIOS++ 轨迹解析对数据行中的空格敏感、本机 helios++ 构建的 LAS 输出不可用、扫描器 ID 错误、前端 UI 被场景画布遮挡、Y/Z 轴约定不一致、模型 up 轴检测、扫描方向为沿轨而非垂轨等。创建了 `run.sh` 脚本支持一键启动/停止前后端，以及 `CHANGELOG.md` 和 `SUMMERY.md` 记录项目变更。
+
+## 2026-09-02
+
+将本地仓库上传至github云端repo [FeHALS](https://github.com/WZYivan/FeHALS)，同时编写了 [CODEOWENRS](.github/CODEOWENRS) 和 `branch rules` 以规范代码贡献流程。在此基础上，梅康凯与唐如意分别提交了两个PR：自动航高计算+Windows平台启动脚本 `run.bat` 、点云特征统计。我指导它们二人熟悉 `git` 以及 [github](www.github.com) 的基本功能与使用。这两个PR尚在review阶段，我还没有merge。
+
+文档方面，我为 [Elsevier CAS Bundle](doc/Manuscript.tex) 添加了 [南京林业大学风格的封面](doc/njfutitlepage.sty) ，修正了一些引用方面的位置错误。并预计为文档添加合适的 `Graphic Abstract` 、图片等内容以丰富文档内容。
+
+除了梅康凯与唐如意二人，尚未有其他人询问代码贡献事宜，即使我已经在合作群中发布公告。
