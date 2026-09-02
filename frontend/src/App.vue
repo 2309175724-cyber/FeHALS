@@ -69,18 +69,6 @@ const statusText = {
   failed: '失败',
 }
 
-// 恢复后端已注册的模型（注册表在后端内存中，页面刷新后需重新拉取）
-async function loadExistingModels() {
-  try {
-    const { models } = await api.listModels()
-    models.forEach((m) => sceneStore.addModel({ id: m.id, name: m.name, url: m.url, up: m.up || 'z' }))
-    if (models.length) simStore.addLog('INFO', `已加载 ${models.length} 个已注册模型`)
-  } catch (err) {
-    simStore.addLog('WARNING', '已注册模型加载失败：' + (err.response?.data?.detail || err.message))
-  }
-}
-loadExistingModels()
-
 // 模型上传
 function onPickModel() {
   fileInput.value && fileInput.value.click()
