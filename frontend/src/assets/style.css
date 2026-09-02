@@ -451,6 +451,30 @@ body,
   padding: 20px 0;
 }
 
+.stat-list {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 4px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid #f1f3f5;
+}
+
+.stat-label {
+  color: #6b7280;
+}
+
+.stat-value {
+  font-family: 'Consolas', monospace;
+  color: #111827;
+}
+
 /* ---------- 弓字形面板 ---------- */
 .bowtie-panel {
   margin-bottom: 0;

@@ -12,9 +12,10 @@ MAX_RENDER_POINTS = 1_000_000
 
 
 def parse(file_path: str, max_points: int = MAX_RENDER_POINTS) -> dict:
-    """解析点云文件，返回 {file_path, point_count, bounds, points, intensity}。
+    """解析点云文件，返回 {file_path, point_count, bounds, stats, points, intensity}。
 
-    points 为降采样后的 [[x, y, z], ...] 列表；intensity 为对应强度（若无则 None）。
+    points 为降采样后的 [[x, y, z], ...] 列表；intensity 为对应强度（若无则 None）；
+    stats 为全量点的特征统计（不受降采样影响）。
     """
     p = Path(file_path)
     if not p.exists():
@@ -66,6 +67,8 @@ def _build_result(path: str, xyz: np.ndarray, intensity: Optional[np.ndarray], m
          float(xyz[:, 0].max()), float(xyz[:, 1].max()), float(xyz[:, 2].max())]
         if n else [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     )
+    # 特征统计基于全量点（降采样仅影响渲染点集）
+    point_stats = stats(xyz)
 
     # 降采样
     if n > max_points:
@@ -77,6 +80,7 @@ def _build_result(path: str, xyz: np.ndarray, intensity: Optional[np.ndarray], m
         "file_path": path,
         "point_count": n,
         "bounds": bounds,
+        "stats": point_stats,
         "points": xyz.astype(float).round(6).tolist(),
         "intensity": intensity.astype(float).round(4).tolist() if intensity is not None else None,
     }
@@ -84,7 +88,7 @@ def _build_result(path: str, xyz: np.ndarray, intensity: Optional[np.ndarray], m
 
 
 def stats(xyz: np.ndarray) -> dict:
-    """点云基础特征统计（F13 复用）。"""
+    """点云基础特征统计：点数、平均高度、高度标准差与高度范围。"""
     if xyz.shape[0] == 0:
         return {"count": 0}
     z = xyz[:, 2]
