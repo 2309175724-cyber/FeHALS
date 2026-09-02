@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
+import { heightColor } from './colorRamp'
 
 // 单例场景管理器：负责 Three.js 场景、模型加载、点云渲染与航点交互。
 let singleton = null
@@ -567,15 +568,6 @@ function createThreeScene() {
       colors[i * 3] = c[0]; colors[i * 3 + 1] = c[1]; colors[i * 3 + 2] = c[2]
     }
     return colors
-  }
-
-  function heightColor(t) {
-    const stops = [[0,0,1],[0,1,1],[0,1,0],[1,1,0],[1,0,0]]
-    const x = Math.max(0, Math.min(1, t)) * (stops.length - 1)
-    const i = Math.min(Math.floor(x), stops.length - 2)
-    const f = x - i
-    const a = stops[i], b = stops[i + 1]
-    return [a[0]+(b[0]-a[0])*f, a[1]+(b[1]-a[1])*f, a[2]+(b[2]-a[2])*f]
   }
 
   return {
