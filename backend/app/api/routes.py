@@ -2,6 +2,7 @@
 
 模型 / 航迹 / 配置 / 仿真 / 结果 / 缓存 六类资源。
 """
+import json
 import shutil
 import time
 import uuid
@@ -32,6 +33,39 @@ _CHUNK = 1024 * 1024
 
 # ---------------------------- 模型管理 ----------------------------
 
+def _restore_model_registry() -> None:
+    """启动时从模型目录恢复注册表。
+
+    注册表存于内存，后端重启即丢失；模型文件本身持久化在 MODELS_DIR。
+    上传时落盘 {model_id}.json 清单（记录原始文件名），此处连同无清单的
+    孤儿模型文件一并恢复注册，避免后端重启后已上传模型"消失"。
+    """
+    for p in sorted(MODELS_DIR.iterdir()):
+        ext = p.suffix.lower()
+        if ext not in ALLOWED_MODEL_EXTS:
+            continue
+        model_id = p.stem
+        if model_id in MODEL_REGISTRY:
+            continue
+        manifest = MODELS_DIR / f"{model_id}.json"
+        filename = p.name
+        if manifest.exists():
+            try:
+                filename = json.loads(manifest.read_text(encoding="utf-8")).get("filename", p.name)
+            except (OSError, ValueError):
+                pass
+        MODEL_REGISTRY[model_id] = {
+            "filename": filename,
+            "path": str(p),
+            "url": f"/static/models/{p.name}",
+            "ext": ext,
+            "up": config_generator.detect_up_axis(str(p)) if ext == ".obj" else "z",
+        }
+
+
+_restore_model_registry()
+
+
 @router.post("/models/upload")
 async def upload_model(file: UploadFile = File(...)):
     ext = Path(file.filename or "").suffix.lower()
@@ -56,6 +90,11 @@ async def upload_model(file: UploadFile = File(...)):
         "ext": ext,
         "up": up,
     }
+    # 落盘清单（原始文件名），供后端重启后恢复注册表
+    (MODELS_DIR / f"{model_id}.json").write_text(
+        json.dumps({"filename": file.filename or dest.name}, ensure_ascii=False),
+        encoding="utf-8",
+    )
     return {"model_id": model_id, "filename": file.filename, "url": url, "up": up}
 
 
@@ -73,6 +112,7 @@ async def delete_model(model_id: str):
     m = MODEL_REGISTRY.pop(model_id, None)
     if m:
         Path(m["path"]).unlink(missing_ok=True)
+        (MODELS_DIR / f"{model_id}.json").unlink(missing_ok=True)
     return {"success": True}
 
 
