@@ -207,6 +207,7 @@ async def get_result(task_id: str):
         "file_path": parsed["file_path"],
         "point_count": parsed["point_count"],
         "bounds": parsed["bounds"],
+        "stats": parsed["stats"],
         "points": parsed["points"],
         "intensity": parsed["intensity"],
     }
