@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useSceneStore } from '../stores/scene'
 import { useSimulationStore } from '../stores/simulation'
-import { heightCssColor } from '../composables/colorRamp'
+import { heightCssColor } from '../composables/useThreeScene'
 
 const sceneStore = useSceneStore()
 const simStore = useSimulationStore()
