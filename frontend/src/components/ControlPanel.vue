@@ -36,8 +36,16 @@ const scannerParams = computed(() => specs.value.scanner.params)
 
 const altWarning = computed(() => {
   const min = specs.value.scanner.params.rangeMin.default
+  // 飞行器准许最大飞行高度 = min(平台参数上限, 扫描器最大测程)
+  const rangeMax = specs.value.scanner.params.rangeMax?.default
+  const ceiling = rangeMax != null
+    ? Math.min(specs.value.platform.params.altitude.max, rangeMax)
+    : specs.value.platform.params.altitude.max
   if (simStore.params.altitude < min) {
     return `航高低于扫描器最小测程 ${min} m`
+  }
+  if (simStore.params.altitude > ceiling) {
+    return `航高超过飞行器准许最大飞行高度 ${ceiling} m`
   }
   return ''
 })
@@ -67,11 +75,14 @@ function autoAltitude() {
   sceneMaxZ.value = maxZ
 
   const spec = specs.value.platform.params.altitude
+  // 飞行器准许最大飞行高度 = min(平台参数上限, 扫描器最大测程)
+  const rangeMax = specs.value.scanner.params.rangeMax?.default
+  const maxAllowed = rangeMax != null ? Math.min(spec.max, rangeMax) : spec.max
   let recommended = Math.ceil((maxZ + SAFETY_MARGIN) * 10) / 10
   if (recommended < spec.min) recommended = spec.min
-  if (recommended > spec.max) {
-    simStore.addLog('WARNING', `建议航高 ${recommended} m 超过上限 ${spec.max} m，已按上限设置`)
-    recommended = spec.max
+  if (recommended > maxAllowed) {
+    simStore.addLog('WARNING', `建议航高 ${recommended} m 超过飞行器准许最大飞行高度 ${maxAllowed} m，已按上限设置`)
+    recommended = maxAllowed
   }
   simStore.params.altitude = recommended
   simStore.addLog(
@@ -145,14 +156,15 @@ async function generateConfig() {
           :step="spec.step"
         />
         <input
-          v-else
+          v-else-if="spec.default !== null"
           :value="spec.default"
           type="number"
           disabled
           class="input-readonly"
         />
+        <span v-else class="field-range">无上限</span>
         <span class="field-range">
-          {{ spec.readonly ? '固定值' : `有效范围：${spec.min} ~ ${spec.max}` }}
+          {{ spec.readonly ? (spec.default === null ? '' : '固定值') : `有效范围：${spec.min} ~ ${spec.max}` }}
         </span>
         <span v-if="spec.note" class="field-note">{{ spec.note }}</span>
       </div>
