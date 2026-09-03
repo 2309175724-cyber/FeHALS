@@ -16,7 +16,8 @@ set "PROJ=%~dp0"
 rem --- Configurable (override via environment variables) ---
 if not defined BACKEND_PORT  set "BACKEND_PORT=8000"
 if not defined FRONTEND_PORT set "FRONTEND_PORT=5173"
-if not defined CONDA_ENV     set "CONDA_ENV=FeHALS"
+rem CONDA_ENV 留空时后端用系统 Python 3.9（py -3.9）；如需 conda 环境，在此处填名字
+if not defined CONDA_ENV     set "CONDA_ENV="
 
 set "ACTION=%~1"
 if "%ACTION%"=="" set "ACTION=start"
@@ -45,7 +46,7 @@ if errorlevel 1 (
 call :check_env
 
 echo [START] Backend  (port %BACKEND_PORT%)...
-set "BACKEND_CMD=python run.py"
+set "BACKEND_CMD=py -3.9 run.py"
 if not "%CONDA_ENV%"=="" (
   where conda >nul 2>nul
   if not errorlevel 1 set "BACKEND_CMD=conda run -n %CONDA_ENV% python run.py"
@@ -99,10 +100,10 @@ exit /b 0
 rem ---------------------------------------------------------------------------
 rem Environment check: conda / node / npm / HELIOS++ paths
 :check_env
-where conda >nul 2>nul
+where py >nul 2>nul
 if errorlevel 1 (
-  echo [WARN] conda not found - backend will use system python.
-  echo        Install backend deps first:  pip install -r backend\requirements.txt
+  echo [WARN] Python launcher "py" not found - set CONDA_ENV to a valid conda env,
+  echo        or install deps into a Python 3.9:  pip install -r backend\requirements.txt
 )
 where node >nul 2>nul
 if errorlevel 1 echo [WARN] node not found. Install Node.js.
