@@ -1,4 +1,4 @@
-all: main
+.DEFAULT_GOAL := main
 
 main: Manuscript.tex
 	latexmk -xelatex $<
