@@ -67,13 +67,14 @@
 
 \Member[2310604116]{王 孜悠}
 \Member[2310604109]{梅 康凯}
-\Member[]{唐 如意}
-\Member[]{温 璞}
-\Member[]{刘 继明}
-\Member[]{李 英杰}
-\Member[]{杜 仲宇}
-\Member[]{施 祺}
-\Member[]{向 宇鸣}
+\Member[2310604115]{唐 如意}
+\Member[2310604122]{杨 杰瑞}
+\Member[2310604117]{温 璞}
+\Member[2110604112]{刘 继明}
+\Member[2110604106]{李 英杰}
+\Member[2310604103]{杜 仲宇}
+\Member[2310604113]{施 祺}
+\Member[2310604118]{向 宇鸣}
 
 \Teacher{隋 铭明}
 \Teacher{那 嘉明}
@@ -85,28 +86,48 @@
 \credit{文档编写, 思路构建, 代码实现, 功能验证, 项目管理, 代码审查}
 
 \author[1]{梅 康凯}[style=chinese, orcid=2310604109]
+\credit{代码实现, 系统适配}
+
+\author[1]{唐 如意}[style=chinese, orcid=2310604115]
 \credit{代码实现}
 
-\author[1]{唐 如意}[style=chinese]
-\credit{代码实现}
+\author[1]{杨 杰瑞}[style=chinese, orcid=2310604122]
+\credit{图表绘制}
 
-\author[1]{温 璞}[style=chinese]
+\author[1]{温 璞}[style=chinese, orcid=2310604117]
 \credit{暂无贡献}
 
-\author[1]{刘 继明}[style=chinese]
+\author[1]{刘 继明}[style=chinese, orcid=2110604112]
 \credit{暂无贡献}
 
-\author[1]{李 英杰}[style=chinese]
+\author[1]{李 英杰}[style=chinese, orcid=2110604106]
 \credit{暂无贡献}
 
-\author[1]{杜 仲宇}[style=chinese]
+\author[1]{杜 仲宇}[style=chinese, orcid=2310604103]
 \credit{暂无贡献}
 
-\author[1]{施 祺}[style=chinese]
+\author[1]{施 祺}[style=chinese, orcid=2310604113]
 \credit{暂无贡献}
 
-\author[1]{向 宇鸣}[style=chinese]
+\author[1]{向 宇鸣}[style=chinese, orcid=2310604118]
 \credit{暂无贡献}
+
+\author[1]{隋 铭明}[style=chinese]
+\fnmark[1]
+\fntext[1]{指导老师}
+\credit{监督指导}
+
+\author[1]{那 嘉明}[style=chinese]
+\fnmark[1]
+\credit{监督指导}
+
+\author[1]{陈 动}[style=chinese]
+\fnmark[1]
+\credit{监督指导}
+
+\author[1]{朱 杰}[style=chinese]
+\fnmark[1]
+\credit{监督指导}
 
 \affiliation[1]{organization={College of Civil Engineering, Nanjing Forestry University},
   addressline={Longpan Rd.},
@@ -119,7 +140,7 @@
 \end{abstract}
 
 \begin{graphicalabstract}
-  % \includegraphics{}
+  \includegraphics[width=\textwidth]{figs/graphicalabstract.pdf}
 \end{graphicalabstract}
 
 % Research highlights
@@ -147,7 +168,9 @@ HELIOS++是一款开源的激光雷达仿真框架，基于光线追踪算法能
 
 HELIOS++官方团队已提供了一个基于QGIS的图形化插件AEOS \citep{aeos}，将HELIOS++的仿真配置与执行功能集成到QGIS桌面环境中。AEOS作为QGIS插件，充分利用了QGIS的三维地图渲染与地理空间数据管理能力，适合需要与GIS工作流深度结合的用户。然而，AEOS的使用依赖于QGIS桌面环境的完整安装与配置，对于仅需快速进行航路规划与仿真参数调试的用户而言，启动和配置成本较高，且无法在浏览器或轻量级环境中直接使用。
 
-针对上述问题，本文设计并实现了FeHALS（Frontend of HELIOS++ for Airborne Laser Scanning），一个基于Web的三维可视化航路规划与激光仿真系统。与AEOS的QGIS集成路线不同，FeHALS采用浏览器/服务器（B/S）架构：前端基于Vue 3与Three.js构建三维交互场景，提供模型加载、交互式航点编辑、参数配置与点云渲染等功能；后端基于FastAPI实现，负责航迹与XML配置文件的生成，并通过子进程调用HELIOS++引擎执行仿真，经WebSocket将运行日志实时推送到前端。用户通过浏览器即可完成从场景构建、航路设计、仿真执行到结果可视化的全流程操作，无需安装任何客户端软件。
+针对上述问题，本文设计并实现了FeHALS（Frontend of HELIOS++ for Airborne Laser Scanning），一个基于Web的三维可视化航路规划与激光仿真系统。与AEOS的QGIS集成路线不同，FeHALS采用浏览器/服务器（B/S）架构：前端基于Vue 3与Three.js构建三维交互场景，提供模型加载、交互式航点编辑、参数配置与点云渲染等功能；后端基于FastAPI实现，负责航迹与XML配置文件的生成，并通过子进程调用HELIOS++引擎执行仿真，经WebSocket \citep{WebSocket} 将运行日志实时推送到前端。用户通过浏览器即可完成从场景构建、航路设计、仿真执行到结果可视化的全流程操作，无需安装任何客户端软件。
+
+在项目开发过程中，我们全程采用 Git 与 GitHub 作为版本控制与协作平台。所有代码变更均通过分支（branch）提交，并经由 Pull Request（PR）发起合并请求，由仓库唯一的 CODEOWNER 进行代码审查（review）后方可合并至主分支。这一机制借助 GitHub 的分支保护规则与 CODEOWNERS 文件实现，确保了每次合入的代码都经过审核，历史记录清晰可溯。同时，团队成员通过 Fork + PR 的工作流贡献代码，既保证了主仓库的稳定性，也降低了协作门槛。这种本地开发与云端协作相结合的现代化软件开发实践，不仅提升了团队的协作效率，也充分体现了软件工程最佳规范在本项目中的落地。
 
 本文的主要贡献包括：（1）提出一种面向HELIOS++的Web端三维航路规划交互方案，通过鼠标点击与拖拽即可在三维场景中完成航点设定与航线编辑；（2）实现仿真参数的图形化配置与XML、航迹文件的自动生成，屏蔽了HELIOS++底层配置文件的复杂性；（3）实现仿真执行过程的日志实时推送与点云结果的可视化渲染，形成完整的闭环工作流。
 
@@ -161,14 +184,14 @@ HELIOS++ \citep{heliosPlusPlus}是一款基于C++的开源激光雷达仿真框�
 Three.js \citep{threejs}是一个基于WebGL \citep{webgl} 的开源JavaScript三维图形库，封装了场景（Scene）、相机（Camera）、渲染器（Renderer）与网格（Mesh）等核心对象，支持OBJ、GLTF、STL等多种三维模型格式的加载，并提供了轨道控制（OrbitControls）、拖拽控制（DragControls）与射线拾取（Raycaster）等交互组件。借助Three.js，可在浏览器中构建轻量级的三维可视化场景，实现模型展示、点云渲染与鼠标交互拾取，为航路规划提供直观的操作界面。本系统前端即基于Three.js实现三维场景渲染与航点交互。
 
 \subsection{FastAPI与后端异步任务}
-FastAPI \citep{fastapi}是一个基于Python的高性能Web框架，基于类型注解与Pydantic \citep{pydantic} 实现自动的数据校验与接口文档生成，并原生支持异步编程与WebSocket。本系统后端基于FastAPI构建REST API与WebSocket日志通道，通过asyncio子进程异步调用HELIOS++可执行文件，实时捕获其标准输出并以WebSocket推送到前端，实现仿真过程的实时监控。
+FastAPI \citep{fastapi}是一个基于Python的高性能Web框架，基于类型注解与Pydantic \citep{pydantic} 实现自动的数据校验与接口文档生成，并原生支持异步编程与WebSocket。本系统后端基于FastAPI构建REST API \citep{fielding2000rest} 与WebSocket日志通道，通过asyncio子进程异步调用HELIOS++可执行文件，实时捕获其标准输出并以WebSocket推送到前端，实现仿真过程的实时监控。
 
 \section{系统需求分析与设计}\label{sec:design}
 \subsection{用户需求分析}
 本系统的目标用户为航测工程师、遥感研究人员以及相关专业师生。其核心需求可归纳为三个方面：一是直观的航路规划，用户希望在不编写配置文件的情况下，通过三维场景中的鼠标交互即可完成航点设定与航线编辑；二是快速的仿真执行，用户能够通过图形化界面配置平台与扫描仪参数，一键调用HELIOS++引擎并实时查看运行状态；三是便捷的结果可视化，仿真生成的点云能够自动加载到三维场景中，并支持按高度或强度着色以及尺寸、透明度的调节。
 
 \subsection{系统总体架构}
-系统采用浏览器/服务器（B/S）架构，分为前端、后端与仿真引擎三层。前端基于Vue 3 \citep{vuejs} 构建，负责三维场景渲染、航点交互编辑、参数配置与结果展示，通过HTTP与WebSocket与后端通信；后端基于FastAPI，负责接收前端请求，生成HELIOS++所需的航迹文件与XML配置文件，调用HELIOS++可执行文件执行仿真，并解析与返回点云结果；仿真引擎层为HELIOS++，独立于前后端，由后端以子进程方式调用。各模块间通过明确的REST API与WebSocket消息格式进行数据交换，形成“数据导入 $\rightarrow$ 航路规划 $\rightarrow$ 仿真配置 $\rightarrow$ 执行控制 $\rightarrow$ 结果展示 $\rightarrow$ 日志诊断”的数据流。
+系统采用浏览器/服务器（B/S）架构，分为前端、后端与仿真引擎三层。前端基于Vue 3 \citep{vuejs} 构建，负责三维场景渲染、航点交互编辑、参数配置与结果展示，通过HTTP \citep{rfc9110,rfc9113,rfc9114} 与WebSocket与后端通信；后端基于FastAPI，负责接收前端请求，生成HELIOS++所需的航迹文件与XML配置文件，调用HELIOS++可执行文件执行仿真，并解析与返回点云结果；仿真引擎层为HELIOS++，独立于前后端，由后端以子进程方式调用。各模块间通过明确的REST API与WebSocket消息格式进行数据交换，形成“数据导入 $\rightarrow$ 航路规划 $\rightarrow$ 仿真配置 $\rightarrow$ 执行控制 $\rightarrow$ 结果展示 $\rightarrow$ 日志诊断”的数据流。
 
 \subsection{功能优先级划分}
 结合开发环境与工程约束，系统功能划分为三个优先级：核心功能（MVP）包括三维场景渲染、模型加载、交互式航点编辑、航迹导出、仿真参数配置、仿真执行、日志控制台与点云渲染；重要功能包括场景要素属性编辑、自动航线生成、航高自动计算、仿真预设方案、点云特征统计与点云下载；拓展功能包括仿真进度实时反馈、点云覆盖度分析、多任务队列管理与仿真过程动画。本文实现核心功能，其余功能作为后续扩展方向。
