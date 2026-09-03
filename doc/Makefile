@@ -1,7 +1,8 @@
 .DEFAULT_GOAL := main
 
 main: Manuscript.tex
-	latexmk -xelatex $<
+	latexmk -xelatex -outdir=build $<
+	cp build/$(basename $<).pdf ../DESCRIPTION.pdf
 
 DRAWIO_SRC := $(wildcard figs/src/*.drawio)
 DRAWIO_PDF := $(patsubst figs/src/%.drawio, figs/%.pdf, $(DRAWIO_SRC))
