@@ -64,7 +64,7 @@ onMounted(() => {
       </button>
     </div>
 
-    <div v-if="envLoading" class="settings-loading">正在检测 HELIOS++ 运行环境...</div>
+    <div v-if="envLoading" class="settings-loading">正在检测 FeHALS 运行环境...</div>
     <div v-else-if="!envData" class="settings-loading">无法加载环境诊断信息</div>
     <template v-else>
       <!-- 整体状态 -->
@@ -74,82 +74,54 @@ onMounted(() => {
         <span class="env-summary">{{ envData.summary }}</span>
       </div>
 
-      <!-- 可执行文件 -->
+      <!-- Python 后端环境 -->
       <div class="env-section">
         <div class="env-section-title">
-          可执行文件
-          <span class="env-badge" :class="'env-badge-' + envData.helios_executable.status">
-            {{ statusIcon[envData.helios_executable.status] }}
-            {{ statusText[envData.helios_executable.status] }}
+          Python 后端环境
+          <span class="env-badge" :class="'env-badge-' + envData.python_env.status">
+            {{ statusIcon[envData.python_env.status] }}
+            {{ statusText[envData.python_env.status] }}
           </span>
         </div>
         <div class="env-detail-row">
-          <span class="env-detail-label">配置路径</span>
-          <span class="env-detail-value">{{ envData.helios_executable.path }}</span>
+          <span class="env-detail-label">Python 版本</span>
+          <span class="env-detail-value">{{ envData.python_env.python_version }}</span>
         </div>
-        <div class="env-detail-row" v-if="envData.helios_executable.resolved_path">
-          <span class="env-detail-label">实际路径</span>
-          <span class="env-detail-value">{{ envData.helios_executable.resolved_path }}</span>
-        </div>
-        <div class="env-detail-row" v-if="envData.helios_executable.version">
-          <span class="env-detail-label">版本</span>
-          <span class="env-detail-value">{{ envData.helios_executable.version }}</span>
-        </div>
-        <div class="env-detail-row" v-if="envData.helios_executable.status !== 'ok'">
-          <span class="env-detail-hint">{{ envData.helios_executable.message }}</span>
-        </div>
-      </div>
 
-      <!-- 资源目录 -->
-      <div class="env-section">
-        <div class="env-section-title">
-          资源目录完整性
-          <span
-            class="env-badge"
-            :class="'env-badge-' + (envData.resource_dirs.some(d => d.status === 'error') ? 'error' : (envData.resource_dirs.some(d => d.status === 'warning') ? 'warning' : 'ok'))"
-          >
-            {{ statusText[envData.resource_dirs.some(d => d.status === 'error') ? 'error' : (envData.resource_dirs.some(d => d.status === 'warning') ? 'warning' : 'ok')] }}
-          </span>
-        </div>
-        <div v-for="dir in envData.resource_dirs" :key="dir.name" class="env-sub-group">
-          <div class="env-sub-title" :class="{ 'env-text-error': dir.status === 'error' }">
-            {{ dir.name }}
-            <span class="env-sub-path">{{ dir.path }}</span>
-          </div>
-          <div v-if="dir.message" class="env-sub-message" :class="'env-text-' + dir.status">{{ dir.message }}</div>
-          <!-- 仓库子目录 -->
-          <div v-if="dir.subdirs" class="env-check-list">
+        <!-- 关键依赖 -->
+        <div class="env-sub-group">
+          <div class="env-sub-title">关键依赖</div>
+          <div class="env-check-list">
             <div
-              v-for="sub in dir.subdirs"
-              :key="sub.path"
+              v-for="dep in envData.python_env.critical_deps"
+              :key="dep.name"
               class="env-check-item"
             >
-              <span class="env-check-icon" :class="'env-icon-' + sub.status">{{ statusIcon[sub.status] }}</span>
-              <span class="env-check-path">{{ sub.path }}</span>
-              <span class="env-check-desc">{{ sub.description }}</span>
-            </div>
-          </div>
-          <!-- pyhelios 文件 -->
-          <div v-if="dir.files" class="env-check-list">
-            <div
-              v-for="f in dir.files"
-              :key="f.path"
-              class="env-check-item"
-            >
-              <span class="env-check-icon" :class="'env-icon-' + f.status">{{ statusIcon[f.status] }}</span>
-              <span class="env-check-path">{{ f.path }}</span>
-              <span class="env-check-desc">{{ f.description }}</span>
+              <span class="env-check-icon" :class="'env-icon-' + dep.status">{{ statusIcon[dep.status] }}</span>
+              <span class="env-check-path">{{ dep.name }}</span>
+              <span class="env-check-desc">
+                {{ dep.installed ? (dep.version || '已安装') : dep.error }}
+              </span>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Assets 搜索路径 -->
-      <div class="env-section" v-if="envData.assets && envData.assets.length">
-        <div class="env-section-title">Assets 搜索路径</div>
-        <div v-for="a in envData.assets" :key="a.index" class="env-check-item">
-          <span class="env-check-icon" :class="'env-icon-' + a.status">{{ statusIcon[a.status] }}</span>
-          <span class="env-check-path">{{ a.path }}</span>
+        <!-- 可选依赖 -->
+        <div class="env-sub-group">
+          <div class="env-sub-title">可选依赖</div>
+          <div class="env-check-list">
+            <div
+              v-for="dep in envData.python_env.optional_deps"
+              :key="dep.name"
+              class="env-check-item"
+            >
+              <span class="env-check-icon" :class="'env-icon-' + dep.status">{{ statusIcon[dep.status] }}</span>
+              <span class="env-check-path">{{ dep.name }}</span>
+              <span class="env-check-desc">
+                {{ dep.installed ? (dep.version || '已安装') : '未安装（部分功能受限）' }}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -171,6 +143,31 @@ onMounted(() => {
             <span class="env-check-path">{{ d.label }}</span>
             <span class="env-check-desc">{{ d.message }}</span>
           </div>
+        </div>
+      </div>
+
+      <!-- HELIOS++ 可执行文件（外部引擎，附加信息） -->
+      <div class="env-section">
+        <div class="env-section-title">
+          HELIOS++ 仿真引擎
+          <span class="env-badge" :class="'env-badge-' + envData.helios_executable.status">
+            {{ statusIcon[envData.helios_executable.status] }}
+            {{ statusText[envData.helios_executable.status] }}
+          </span>
+        </div>
+        <div class="env-detail-row">
+          <span class="env-detail-label">配置路径</span>
+          <span class="env-detail-value">{{ envData.helios_executable.path }}</span>
+        </div>
+        <div class="env-detail-row" v-if="envData.helios_executable.resolved_path">
+          <span class="env-detail-label">实际路径</span>
+          <span class="env-detail-value">{{ envData.helios_executable.resolved_path }}</span>
+        </div>
+        <div class="env-detail-row" v-if="envData.helios_executable.status !== 'ok'">
+          <span class="env-detail-hint">{{ envData.helios_executable.message }}</span>
+        </div>
+        <div class="env-detail-row" v-if="envData.helios_executable.status === 'ok'">
+          <span class="env-detail-hint env-text-ok">{{ envData.helios_executable.message }}</span>
         </div>
       </div>
     </template>

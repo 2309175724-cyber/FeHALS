@@ -1,20 +1,18 @@
-"""HELIOS++ 运行环境检测与诊断服务。
+"""FeHALS 运行环境检测与诊断服务。
 
-检测项：
-  1. HELIOS++ 可执行文件：存在性、可执行权限、版本探测
-  2. 资源目录完整性：源仓库根目录、data 子目录、pyhelios 平台/扫描器定义
-  3. 静态工作目录：模型 / 航迹 / 配置 / 结果
+检测项（产品最小可用性）：
+  1. Python 运行环境：版本、关键依赖可导入性（后端最小可用性）
+  2. 静态工作目录：模型 / 航迹 / 配置 / 结果
+  3. HELIOS++ 可执行文件：存在性（外部仿真引擎，仅做存在性检查）
 """
-import asyncio
-import os
-import shutil
+import importlib
+import sys
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from app import config as cfg
 
 def _severity(items: list[dict]) -> str:
-    """根据子项状态汇总整体严重程度：error > warning > ok。"""
     statuses = [i.get("status", "ok") for i in items]
     if "error" in statuses:
         return "error"
@@ -23,82 +21,120 @@ def _severity(items: list[dict]) -> str:
     return "ok"
 
 # ------------------------------------------------------------------ #
-#  1. HELIOS++ 可执行文件检测
+#  1. Python 后端环境检测（产品最小可用性）
 # ------------------------------------------------------------------ #
 
-def _resolve_executable(path: str) -> Optional[str]:
-    """解析可执行文件路径。
+# 后端关键依赖列表 —— 缺了就跑不起来
+_CRITICAL_DEPS = [
+    ("fastapi", "FastAPI 框架"),
+    ("uvicorn", "ASGI 服务器"),
+    ("numpy", "数值计算"),
+    ("laspy", "点云 LAS 读写"),
+    ("pydantic", "数据校验"),
+    ("yaml", "YAML 配置解析（PyYAML）"),
+    ("aiofiles", "异步文件操作"),
+]
 
-    若 path 含路径分隔符则视为文件路径直接检查；
-    否则视为命令名，在 PATH 中查找（shutil.which）。
-    """
-    if os.sep in path or "/" in path:
-        # 显式文件路径
-        p = Path(path)
-        return str(p) if p.exists() else None
-    # 命令名 —— 在 PATH 中查找
-    resolved = shutil.which(path)
-    return resolved
+# 可选依赖 —— 缺了不影响启动但部分功能受限
+_OPTIONAL_DEPS = [
+    ("lazrs", "LAZ 压缩支持"),
+    ("websockets", "WebSocket 支持"),
+]
 
-def _is_executable(path: str) -> bool:
-    """判断文件是否可执行（Unix 权限位 / Windows 存在即可）。"""
-    if os.name == "nt":
-        return Path(path).exists()
-    return bool(Path(path).exists() and os.access(path, os.X_OK))
-
-async def _probe_version(path: str) -> Optional[str]:
-    """尝试运行 helios++ 获取版本信息（3 秒超时）。
-
-    HELIOS++ 无标准 --version 参数，此处以 --help 的首行输出为
-    尽力探测；失败返回 None，不影响整体诊断。
-    """
+def _check_dep(name: str) -> tuple[bool, Optional[str]]:
+    """尝试导入一个模块，返回 (是否成功, 版本或错误信息)。"""
     try:
-        proc = await asyncio.create_subprocess_exec(
-            path, "--help",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        try:
-            stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=3)
-        except asyncio.TimeoutError:
-            proc.kill()
-            await proc.wait()
-            return None
-        first_line = stdout.decode("utf-8", errors="replace").split("\n", 1)[0].strip()
-        if first_line:
-            return first_line
-    except (FileNotFoundError, OSError):
-        pass
-    return None
+        mod = importlib.import_module(name)
+        version = getattr(mod, "__version__", None)
+        return True, version
+    except ImportError as e:
+        return False, str(e)
 
-async def diagnose_helios_executable() -> dict:
-    """检测 HELIOS++ 可执行文件。"""
+def diagnose_python_env() -> dict:
+    """检测 Python 运行环境和关键依赖。"""
+    py_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+
+    # 关键依赖
+    critical = []
+    for dep, desc in _CRITICAL_DEPS:
+        ok, info = _check_dep(dep)
+        critical.append({
+            "name": dep,
+            "description": desc,
+            "installed": ok,
+            "version": info if ok else None,
+            "error": None if ok else info,
+            "status": "ok" if ok else "error",
+        })
+
+    # 可选依赖
+    optional = []
+    for dep, desc in _OPTIONAL_DEPS:
+        ok, info = _check_dep(dep)
+        optional.append({
+            "name": dep,
+            "description": desc,
+            "installed": ok,
+            "version": info if ok else None,
+            "status": "ok" if ok else "warning",
+        })
+
+    critical_status = _severity(critical)
+    return {
+        "python_version": py_version,
+        "critical_deps": critical,
+        "optional_deps": optional,
+        "status": critical_status,
+        "message": "Python 环境就绪" if critical_status == "ok" else "关键依赖缺失，后端无法正常运行",
+    }
+
+# ------------------------------------------------------------------ #
+#  2. HELIOS++ 可执行文件检测（外部引擎，仅存在性检查）
+# ------------------------------------------------------------------ #
+
+def diagnose_helios_executable() -> dict:
+    """检测 HELIOS++ 可执行文件是否存在（外部仿真引擎，仅做存在性检查）。
+
+    HELIOS++ 不由 FeHALS 提供，因此只检测可执行文件能否找到，
+    不做版本探测、不检测资源目录完整性等细项。
+    """
+    import shutil
+    import os
+
     path = cfg.HELIOS_PATH
-    resolved = _resolve_executable(path)
 
-    if resolved is None:
+    # 解析路径
+    if os.sep in path or "/" in path:
+        resolved = str(Path(path)) if Path(path).exists() else None
+    else:
+        resolved = shutil.which(path)
+
+    found = resolved is not None
+    executable = False
+    if found:
+        if os.name == "nt":
+            executable = True
+        else:
+            executable = bool(os.access(resolved, os.X_OK))
+
+    if not found:
         return {
             "path": path,
             "resolved_path": None,
             "found": False,
             "executable": False,
-            "version": None,
-            "status": "error",
-            "message": f"未找到 HELIOS++ 可执行文件「{path}」，请检查 HELIOS_PATH 环境变量或安装 HELIOS++。",
+            "status": "warning",
+            "message": f"未找到 HELIOS++ 可执行文件「{path}」，仿真功能将不可用。（HELIOS++ 为外部依赖，需自行安装）",
         }
 
-    is_exec = _is_executable(resolved)
-    version = await _probe_version(resolved)
-
-    if not is_exec:
+    if not executable:
         return {
             "path": path,
             "resolved_path": resolved,
             "found": True,
             "executable": False,
-            "version": None,
-            "status": "error",
-            "message": f"文件已找到「{resolved}」但无执行权限，请添加执行权限（chmod +x）。",
+            "status": "warning",
+            "message": f"HELIOS++ 已找到「{resolved}」但无执行权限（chmod +x）。",
         }
 
     return {
@@ -106,133 +142,9 @@ async def diagnose_helios_executable() -> dict:
         "resolved_path": resolved,
         "found": True,
         "executable": True,
-        "version": version,
         "status": "ok",
-        "message": version or "已就绪",
+        "message": "HELIOS++ 可执行文件就绪",
     }
-
-# ------------------------------------------------------------------ #
-#  2. 资源目录完整性检测
-# ------------------------------------------------------------------ #
-
-# HELIOS++ 源仓库关键子目录（场景部件 / 演示场景）
-_REPO_KEY_DIRS = [
-    ("data", "演示数据根目录", True),
-    ("data/scenes", "场景定义", False),
-    ("data/sceneparts", "场景部件", False),
-]
-
-# pyhelios 数据目录关键文件（平台 / 扫描器定义）
-_PYHELIOS_KEY_FILES = [
-    ("data/platforms.xml", "平台定义", True),
-    ("data/scanners_als.xml", "机载扫描器定义", False),
-    ("data/scanners_tls.xml", "Terrestrial 扫描器定义", False),
-]
-
-def _check_repo() -> dict:
-    """检测 HELIOS++ 源仓库根目录及关键子目录。"""
-    repo = Path(cfg._HELIOS_REPO)
-    label = "HELIOS_REPO"
-
-    if not repo.exists():
-        return {
-            "name": label,
-            "path": str(repo),
-            "exists": False,
-            "status": "error",
-            "message": f"HELIOS++ 源仓库目录不存在「{repo}」，请设置 HELIOS_REPO 环境变量。",
-            "subdirs": [],
-        }
-
-    subdirs = []
-    for rel, desc, critical in _REPO_KEY_DIRS:
-        p = repo / rel
-        exists = p.exists()
-        subdirs.append({
-            "path": rel,
-            "description": desc,
-            "exists": exists,
-            "critical": critical,
-            "status": "error" if (critical and not exists) else ("ok" if exists else "warning"),
-        })
-
-    overall = _severity(subdirs)
-    return {
-        "name": label,
-        "path": str(repo),
-        "exists": True,
-        "status": overall,
-        "message": "目录结构完整" if overall == "ok" else "部分关键子目录缺失",
-        "subdirs": subdirs,
-    }
-
-def _check_pyhelios_data() -> dict:
-    """检测 pyhelios 数据目录（平台/扫描器 XML 定义）。"""
-    pyhelios_data = Path(cfg._HELIOS_REPO) / "python" / "pyhelios" / "data"
-
-    if not pyhelios_data.exists():
-        return {
-            "name": "pyhelios_data",
-            "path": str(pyhelios_data),
-            "exists": False,
-            "status": "error",
-            "message": "pyhelios 数据目录不存在，平台/扫描器定义无法解析。",
-            "files": [],
-        }
-
-    files = []
-    for rel, desc, critical in _PYHELIOS_KEY_FILES:
-        p = pyhelios_data / rel
-        exists = p.exists()
-        files.append({
-            "path": rel,
-            "description": desc,
-            "exists": exists,
-            "critical": critical,
-            "status": "error" if (critical and not exists) else ("ok" if exists else "warning"),
-        })
-
-    # 额外检测是否存在任意扫描器 XML（通配 scanners_*.xml）
-    scanner_xmls = list(pyhelios_data.glob("scanners_*.xml"))
-    files.append({
-        "path": f"scanners_*.xml（匹配 {len(scanner_xmls)} 个）",
-        "description": "扫描器定义文件（通配）",
-        "exists": len(scanner_xmls) > 0,
-        "critical": False,
-        "status": "ok" if scanner_xmls else "warning",
-    })
-
-    overall = _severity(files)
-    return {
-        "name": "pyhelios_data",
-        "path": str(pyhelios_data),
-        "exists": True,
-        "status": overall,
-        "message": "平台/扫描器定义完整" if overall == "ok" else "部分关键文件缺失",
-        "files": files,
-    }
-
-def _check_assets() -> list:
-    """检测每个 --assets 搜索路径。"""
-    results = []
-    for i, asset_path in enumerate(cfg.HELIOS_ASSETS):
-        p = Path(asset_path)
-        exists = p.exists()
-        results.append({
-            "index": i,
-            "path": asset_path,
-            "exists": exists,
-            "status": "ok" if exists else "warning",
-            "message": "路径有效" if exists else "路径不存在（可能影响资源解析）",
-        })
-    return results
-
-def diagnose_resource_dirs() -> list:
-    """资源目录完整性检测汇总。"""
-    return [
-        _check_repo(),
-        _check_pyhelios_data(),
-    ]
 
 # ------------------------------------------------------------------ #
 #  3. 静态工作目录检测
@@ -263,27 +175,31 @@ def diagnose_static_dirs() -> list:
 #  4. 汇总诊断
 # ------------------------------------------------------------------ #
 
-async def diagnose_all() -> dict:
-    """执行全量环境诊断，返回结构化报告。"""
-    executable = await diagnose_helios_executable()
-    resources = diagnose_resource_dirs()
-    assets = _check_assets()
-    static_dirs = diagnose_static_dirs()
+async def diagnose_all() -> dict[str, Any]:
+    """执行全量环境诊断，返回结构化报告。
 
-    all_items = [executable] + resources + assets + static_dirs
-    overall = _severity(all_items)
+    整体状态（overall）基于 FeHALS 产品最小可用性判断：
+      - Python 后端环境 + 静态工作目录 = ok / warning / error
+      - HELIOS++ 为外部依赖，不影响整体状态（仅作为附加信息展示）
+    """
+    python_env = diagnose_python_env()
+    static_dirs = diagnose_static_dirs()
+    helios = diagnose_helios_executable()
+
+    # 整体状态 = Python 环境 + 静态目录（HELIOS++ 不参与整体判断）
+    overall_items = [python_env] + static_dirs
+    overall = _severity(overall_items)
 
     summary = {
-        "ok": "环境就绪",
-        "warning": "环境存在非关键问题，部分功能可能受限",
-        "error": "环境检测失败，仿真功能不可用",
+        "ok": "FeHALS 运行环境就绪",
+        "warning": "FeHALS 运行环境存在非关键问题",
+        "error": "FeHALS 运行环境检测失败，服务不可用",
     }
 
     return {
         "overall": overall,
         "summary": summary.get(overall, ""),
-        "helios_executable": executable,
-        "resource_dirs": resources,
-        "assets": assets,
+        "python_env": python_env,
         "static_dirs": static_dirs,
+        "helios_executable": helios,
     }
