@@ -39,6 +39,9 @@ export function useHeliosAPI() {
   const listCache = () => api.get('/cache').then((r) => r.data)
   const clearCache = (type) => api.delete(`/cache/${type}`).then((r) => r.data)
 
+// ---- 环境诊断 ----
+  const diagnoseEnv = () => api.get('/env/diagnose').then((r) => r.data)
+
   return {
     uploadModel,
     listModels,
@@ -53,6 +56,7 @@ export function useHeliosAPI() {
     getResult,
     listCache,
     clearCache,
+    diagnoseEnv,
   }
 }
 
