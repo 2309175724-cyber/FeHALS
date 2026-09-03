@@ -44,24 +44,37 @@ def _parse_las(p: Path, max_points: int) -> dict:
 def _parse_xyz(p: Path, max_points: int) -> dict:
     # HELIOS++ 默认 ASCII 点云输出列序（见 DirectMeasurementWriteStrategy.h）：
     #   x y z intensity echo_width returnNumber pulseReturnNumber fullwaveIndex ...
-    # 逐行流式读取，避免大点云文件整体载入内存
-    rows = []
-    inten = []
+    # 逐行流式读取；分块转为 ndarray，避免千万级行的 Python 列表整体驻留内存
+    _CHUNK_ROWS = 500_000
+    blocks: list = []
+    inten_blocks: list = []
+    buf: list = []
+    ibuf: list = []
+    has_inten = True  # 任一有效行缺第 4 列即整体丢弃强度（与旧实现语义一致）
     with open(p, "r", encoding="utf-8", errors="replace") as f:
         for line in f:
             parts = line.split()
             if len(parts) < 3:
                 continue
             try:
-                rows.append((float(parts[0]), float(parts[1]), float(parts[2])))
-                if len(parts) > 3:
-                    inten.append(float(parts[3]))
+                buf.append((float(parts[0]), float(parts[1]), float(parts[2])))
+                if len(parts) > 3 and has_inten:
+                    ibuf.append(float(parts[3]))
+                else:
+                    has_inten = False
             except ValueError:
                 continue
-    if not rows:
+            if len(buf) >= _CHUNK_ROWS:
+                blocks.append(np.asarray(buf, dtype=np.float64))
+                inten_blocks.append(np.asarray(ibuf, dtype=np.float64))
+                buf, ibuf = [], []
+    if buf:
+        blocks.append(np.asarray(buf, dtype=np.float64))
+        inten_blocks.append(np.asarray(ibuf, dtype=np.float64))
+    if not blocks:
         return _build_result(str(p), np.empty((0, 3)), None, max_points)
-    xyz = np.asarray(rows, dtype=np.float64)
-    intensity = np.asarray(inten, dtype=np.float64) if len(inten) == len(rows) else None
+    xyz = blocks[0] if len(blocks) == 1 else np.vstack(blocks)
+    intensity = np.concatenate(inten_blocks) if has_inten and len(inten_blocks) else None
     return _build_result(str(p), xyz, intensity, max_points)
 
 
