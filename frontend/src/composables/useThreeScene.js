@@ -403,7 +403,7 @@ function createThreeScene() {
     disposeObject(root)
     delete state.modelRoots[id]
     // 清除 bbox + label
-    [id, id + '_label'].forEach((k) => {
+    ;[id, id + '_label'].forEach((k) => {
       const h = state.bboxHelpers[k]
       if (h) { state.scene.remove(h); delete state.bboxHelpers[k] }
     })
