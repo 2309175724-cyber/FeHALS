@@ -173,10 +173,10 @@ FeHALS（Frontend of HELIOS++ for Airborne Laser Scanning）以浏览器为操�
 
 系统功能需求如\refTab{tab:functions}所示。
 
-\begin{table}[htbp]
+\begin{table}[pos=!htbp]
   \centering
   \caption{FeHALS功能需求。}
-  \begin{tabular}{p{2.5cm}p{10cm}}
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l l}
     \toprule
     编号 & 需求说明 \\
     \midrule
@@ -192,7 +192,7 @@ FeHALS（Frontend of HELIOS++ for Airborne Laser Scanning）以浏览器为操�
     FR-10 & 查询、下载和解析结果；显示点数、边界、高程/强度统计及40组直方图。 \\
     FR-11 & 统计并分类清理models、trajectories、configs、results。 \\
     \bottomrule
-  \end{tabular}
+  \end{tabular*}
   \label{tab:functions}
 \end{table}
 
@@ -210,7 +210,7 @@ FeHALS采用B/S三层架构：Vue 3、Three.js、Pinia和Axios构成表现层；
 
 系统总体架构如\refFig{fig:arch}所示。
 
-\begin{figure}[htbp]
+\begin{figure}[pos=!htbp]
   \centering
   \caption{FeHALS总体架构。}
   \includegraphics[width=0.85\textwidth]{figs/gernal_fehals_arch.pdf}
@@ -221,7 +221,7 @@ FeHALS采用B/S三层架构：Vue 3、Three.js、Pinia和Axios构成表现层；
 
 系统模块架构如\refFig{fig:module}所示。
 
-\begin{figure}[htbp]
+\begin{figure}[pos=!htbp]
   \centering
   \caption{FeHALS模块架构。}
   \includegraphics[width=\textwidth]{figs/detialed_fehals_arch.pdf}
@@ -234,7 +234,7 @@ FeHALS采用B/S三层架构：Vue 3、Three.js、Pinia和Axios构成表现层；
 
 系统工作流程如\refFig{fig:workflow}所示。
 
-\begin{figure}[htbp]
+\begin{figure}[pos=!htbp]
   \centering
   \caption{FeHALS工作流程。}
   \includegraphics[width=0.85\textwidth]{figs/gernal_fehals_workflow.pdf}
@@ -287,10 +287,10 @@ t = \frac{v - v_{\min}}{\max(v_{\max} - v_{\min}, 1)},
 
 系统后端REST接口如\refTab{tab:apis}所示。
 
-\begin{table}[htbp]
+\begin{table}[pos=!htbp]
   \centering
   \caption{FeHALS后端接口。}
-  \begin{tabular}{p{2.5cm}p{5.5cm}p{5.5cm}}
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l l l}
     \toprule
     方法 & 路径 & 说明 \\
     \midrule
@@ -310,16 +310,16 @@ t = \frac{v - v_{\min}}{\max(v_{\max} - v_{\min}, 1)},
     GET & /api/cache & 查看缓存统计 \\
     DELETE & /api/cache/\{cache\_type\} & 分类清理缓存 \\
     \bottomrule
-  \end{tabular}
+  \end{tabular*}
   \label{tab:apis}
 \end{table}
 
 主要数据对象如\refTab{tab:dataobjects}所示。
 
-\begin{table}[htbp]
+\begin{table}[pos=!htbp]
   \centering
   \caption{主要数据对象。}
-  \begin{tabular}{p{2.2cm}p{2.5cm}p{4cm}p{4cm}}
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l l l l}
     \toprule
     对象 & 形式 & 关键字段 & 用途 \\
     \midrule
@@ -330,7 +330,7 @@ t = \frac{v - v_{\min}}{\max(v_{\max} - v_{\min}, 1)},
     任务 & 内存对象 & task\_id, status, logs, result & 当前随服务进程生命周期存在。 \\
     结果 & XYZ/LAS/LAZ & X, Y, Z, 可选intensity & 保存原始文件并产生统计和显示抽样。 \\
     \bottomrule
-  \end{tabular}
+  \end{tabular*}
   \label{tab:dataobjects}
 \end{table}
 
@@ -385,7 +385,7 @@ LAS/LAZ由laspy解析\citep{laspy}，XYZ以文本流读取，NumPy计算统计�
 
 \printcredits
 
-\bibliographystyle{cas-model2-names}
+\bibliographystyle{gbt7714-numerical}
 \bibliography{cas-refs}
 
 \end{document}
