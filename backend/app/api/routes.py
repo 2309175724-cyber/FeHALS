@@ -15,6 +15,7 @@ from app.config import CONFIGS_DIR, MODELS_DIR, RESULTS_DIR, TRAJECTORIES_DIR
 from app.models.schemas import ConfigRequest, SimulationRunRequest, TrajectoryRequest
 from app.services import (
     config_generator,
+    env_service,
     helios_service,
     pointcloud_parser,
     trajectory_generator,
@@ -263,6 +264,12 @@ async def download_result(task_id: str, format: str = "las"):
     p = Path(task.result_file)
     return FileResponse(str(p), filename=p.name, media_type="application/octet-stream")
 
+# ---------------------------- 环境诊断 ----------------------------
+
+@router.get("/env/diagnose")
+async def diagnose_env():
+    """检测 HELIOS++ 运行环境：可执行文件、资源目录完整性、静态工作目录。"""
+    return await env_service.diagnose_all()
 
 # ---------------------------- 缓存管理 ----------------------------
 
